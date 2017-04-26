@@ -1,0 +1,7 @@
+[package]
+name = "ecoli"
+version = "0.1.0"
+authors = ["Payton Turnage <paytonturnage@gmail.com>"]
+
+[dependencies]
+hmm = { path = "../hmm" }

@@ -1,0 +1,30 @@
+[root]
+name = "ecoli"
+version = "0.1.0"
+dependencies = [
+ "hmm 0.1.0",
+]
+
+[[package]]
+name = "float-cmp"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "num-traits 0.1.37 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "hmm"
+version = "0.1.0"
+dependencies = [
+ "float-cmp 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "num-traits"
+version = "0.1.37"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[metadata]
+"checksum float-cmp 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)" = "ae5c9d3ac80527346eb21666d9135b695243a48ef5f2df19022856975a66c411"
+"checksum num-traits 0.1.37 (registry+https://github.com/rust-lang/crates.io-index)" = "e1cbfa3781f3fe73dc05321bed52a06d2d491eaa764c52335cf4399f046ece99"
