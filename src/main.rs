@@ -1,3 +1,5 @@
+#[macro_use]
+extern crate clap;
 extern crate hmm;
 
 mod corpus;
@@ -26,11 +28,18 @@ fn sequence_file(filename: &str) -> Result<Vec<corpus::Sequence>, String> {
 }
 
 fn main() {
-    let bases = corpus::parse_dna(file_string("resources/ecoli_m54.txt").expect("dna file"))
+    let yaml = load_yaml!("cli.yaml");
+    let matches = clap::App::from_yaml(yaml).get_matches();
+
+    let dna_filename = matches.value_of("dna").unwrap();
+    let truth_filename = matches.value_of("truth").unwrap();
+    let seq_filename = matches.value_of("sequences").unwrap();
+
+    let bases = corpus::parse_dna(file_string(&dna_filename).expect("dna file"))
         .expect("parsed dna bases");
 
-    let train_ranges = sequence_file("resources/train.txt").expect("parsed train sequences");
-    let test_ranges = sequence_file("resources/test.txt").expect("parsed test sequences");
+    let train_ranges = sequence_file(&truth_filename).expect("parsed train sequences");
+    let test_ranges = sequence_file(&seq_filename).expect("parsed test sequences");
 
     let mut internal_codon_table = HashMap::new();
     let mut stop_codon_table = HashMap::new();
@@ -45,15 +54,9 @@ fn main() {
         .collect::<Vec<Vec<(corpus::Label, corpus::Base)>>>();
     let test_seqs = test_ranges.iter().map(|r| r.dna(&bases)).collect::<Vec<Vec<corpus::Base>>>();
     let results = test_seqs.iter()
-    //    .take(1)
         .map(|s| hmm::base::Solve::most_probable_sequence(s, &model))
         .collect::<Result<Vec<Vec<corpus::Label>>, String>>()
         .expect("prediction results");
-    // for (i, result) in results.iter().enumerate() {
-    // for (j, label) in result.iter().zip(ground_truth[i].iter()).enumerate() {
-    // println!("{}: {:?}", j, label);
-    // }
-    // }
 
     let coords = results.iter()
         .enumerate()

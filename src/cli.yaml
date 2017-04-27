@@ -1,0 +1,23 @@
+name: ecoli
+version: "0.1.0"
+about: Finds nonoverlapping genes on the forward strands of E. Coli DNA.
+author: Payton Turnage <paytonturnage@gmail.com>
+
+args:
+    - dna:
+        value_name: DNA_FILE
+        help: A file with a sequence of nucleotide bases.
+        short: d
+        long: dna
+        required: true
+    - truth:
+        value_name: TRUTH_FILE
+        help: A file with sequences and ground truth gene ranges within them for training.
+        short: t
+        long: truth
+        required: true
+    - sequences:
+        value_name: SEQUENCES_FILE
+        help: A file with sequences on which to find nonoverlapping genes on the forward strand.
+        index: 1
+        required: true

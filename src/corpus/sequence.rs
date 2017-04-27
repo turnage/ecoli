@@ -85,32 +85,6 @@ impl Sequence {
         emissions
     }
 
-    pub fn trans_tunings(internal_codon_table: &HashMap<(Base, Base, Base), usize>,
-                         stop_codon_table: &HashMap<(Base, Base, Base), usize>)
-                         -> Vec<((Label, Label), f64)> {
-        let penalty = 5f64;
-        let p = 1f64;
-        let mut tunings = vec![((Label::NonCoding, Label::StartCodon1), p / penalty),
-                               ((Label::StartCodon1, Label::StartCodon2), p),
-                               ((Label::StartCodon2, Label::StartCodon3), p)];
-        for &id in internal_codon_table.values() {
-            tunings.push(((Label::StartCodon3, Label::InternalCodon1(id)), p));
-            tunings.push(((Label::InternalCodon1(id), Label::InternalCodon2(id)), p));
-            tunings.push(((Label::InternalCodon2(id), Label::InternalCodon3(id)), p));
-            for &stop_id in stop_codon_table.values() {
-                tunings.push(((Label::InternalCodon3(id), Label::StopCodon1(stop_id)), p));
-            }
-        }
-
-        for &id in stop_codon_table.values() {
-            tunings.push(((Label::StopCodon1(id), Label::StopCodon2(id)), p));
-            tunings.push(((Label::StopCodon2(id), Label::StopCodon3(id)), p));
-            tunings.push(((Label::StopCodon3(id), Label::NonCoding), p));
-        }
-
-        tunings
-    }
-
     pub fn from_labels(start: usize, labels: &Vec<Label>) -> Result<Sequence, String> {
         let mut genes = Vec::new();
         let mut coord_stack = Vec::new();
@@ -217,8 +191,12 @@ impl fmt::Display for Sequence {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let result = write!(f, "{}-{}:", self.start + 1, self.end);
         let mut gene_results = Vec::new();
-        for &(gene_start, gene_end) in self.genes.iter() {
-            gene_results.push(write!(f, " [{}, {}]", gene_start + 1, gene_end));
+        if self.genes.is_empty() {
+            gene_results.push(write!(f, " No gene"));
+        } else {
+            for &(gene_start, gene_end) in self.genes.iter() {
+                gene_results.push(write!(f, " [{}, {}]", gene_start + 1, gene_end));
+            }
         }
         let composite_result = gene_results.drain(0..).fold(result, |acc, r| acc.and(r));
         composite_result
