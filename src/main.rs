@@ -8,8 +8,6 @@ use std::collections::HashMap;
 use std::io::Read;
 use std::error::Error;
 
-use hmm::base::Emitter;
-
 fn file_string(filename: &str) -> Result<String, std::io::Error> {
     let mut tfile = std::fs::File::open(filename)?;
     let mut buffer = String::new();
@@ -25,6 +23,18 @@ fn sequence_file(filename: &str) -> Result<Vec<corpus::Sequence>, String> {
                 .map(|line| line.parse::<corpus::Sequence>())
                 .collect()
         })
+}
+
+fn deinstance_label(la: corpus::Label) -> corpus::Label {
+    match la {
+        corpus::Label::StopCodon1(_) => corpus::Label::StopCodon1(0),
+        corpus::Label::StopCodon2(_) => corpus::Label::StopCodon2(0),
+        corpus::Label::StopCodon3(_) => corpus::Label::StopCodon3(0),
+        corpus::Label::InternalCodon1(_) => corpus::Label::InternalCodon1(0),
+        corpus::Label::InternalCodon2(_) => corpus::Label::InternalCodon2(0),
+        corpus::Label::InternalCodon3(_) => corpus::Label::InternalCodon3(0),
+        _ => la,
+    }
 }
 
 fn main() {
@@ -46,12 +56,24 @@ fn main() {
     let train_seqs = train_ranges.iter()
         .map(|r| r.label_dna(&bases, &mut internal_codon_table, &mut stop_codon_table))
         .collect::<Vec<Vec<(corpus::Label, corpus::Base)>>>();
-    let tunings = corpus::Sequence::trans_tunings(&internal_codon_table, &stop_codon_table);
     let model = hmm::base::train::discrete(&train_seqs, None);
 
-    let ground_truth = test_ranges.iter()
-        .map(|r| r.label_dna(&bases, &mut internal_codon_table, &mut stop_codon_table))
-        .collect::<Vec<Vec<(corpus::Label, corpus::Base)>>>();
+    let mut trans_count = HashMap::new();
+    for (&s1, dist) in model.trans.iter() {
+        let from = deinstance_label(s1);
+        for (&s2, p) in dist.iter() {
+            let to = deinstance_label(s2);
+            let ref mut e = *trans_count.entry((from, to)).or_insert((0f64, 0f64));
+            e.0 += *p;
+            e.1 += 1f64;
+        }
+    }
+
+    println!("Transition probabilities from training set: ");
+    for (&(to, from), &(p, count)) in trans_count.iter() {
+        println!("{:?} -> {:?}: {}", to, from, p / count)
+    }
+
     let test_seqs = test_ranges.iter().map(|r| r.dna(&bases)).collect::<Vec<Vec<corpus::Base>>>();
     let results = test_seqs.iter()
         .map(|s| hmm::base::Solve::most_probable_sequence(s, &model))

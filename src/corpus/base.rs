@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub enum Base {
     A,
