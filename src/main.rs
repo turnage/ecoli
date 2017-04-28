@@ -59,19 +59,19 @@ fn main() {
     let model = hmm::base::train::discrete(&train_seqs, None);
 
     let mut trans_count = HashMap::new();
+    let mut out_count = HashMap::new();
     for (&s1, dist) in model.trans.iter() {
         let from = deinstance_label(s1);
         for (&s2, p) in dist.iter() {
             let to = deinstance_label(s2);
-            let ref mut e = *trans_count.entry((from, to)).or_insert((0f64, 0f64));
-            e.0 += *p;
-            e.1 += 1f64;
+            *out_count.entry(from).or_insert(0f64) += *p;
+            *trans_count.entry((from, to)).or_insert(0f64) += *p;
         }
     }
 
     println!("Transition probabilities from training set: ");
-    for (&(to, from), &(p, count)) in trans_count.iter() {
-        println!("{:?} -> {:?}: {}", to, from, p / count)
+    for (&(from, to), &p) in trans_count.iter() {
+        println!("{:?} -> {:?}: {}", from, to, p / out_count[&from])
     }
 
     let test_seqs = test_ranges.iter().map(|r| r.dna(&bases)).collect::<Vec<Vec<corpus::Base>>>();
